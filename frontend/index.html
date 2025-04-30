@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do List</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      color: #f0f0f0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 35%;
+      background: #1f1f1f;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #2e2e2e;
+      box-shadow: 2px 0 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar h3 {
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      color: #ffffff;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #2a2a2a;
+      margin-bottom: 10px;
+      padding: 12px 15px;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      transition: background 0.2s ease;
+    }
+
+    li:hover {
+      background: #333;
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #181818;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #f5f5f5;
+      font-size: 1.8rem;
+    }
+    h3{
+      position: sticky;
+      top: 8px;
+      background: 2px solid;
+    }
+    select,
+    input[type="text"],
+    button {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+      transition: border 0.2s ease, background 0.2s ease;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #00aaff;
+      outline: none;
+      background-color: #333;
+    }
+
+    button {
+      background-color: #00aaff;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #008ecc;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: 40%;
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+
+      .main {
+        height: 60%;
+        padding: 20px;
+      }
+
+      input[type="date"] {
+        width: 100%;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid #444;
+        background-color: #2a2a2a;
+        color: #f0f0f0;
+      }
+
+      input[type="checkbox"] {
+        transform: scale(1.2);
+        cursor: pointer;
+      }
+
+    }
+
+    .task-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    .task-options input[type="date"] {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      color: #ccc;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      border-color: #00aaff;
+      outline: none;
+      background-color: #333;
+    }
+
+  </style>
+
+</head>
+
+<body>
+  <div class="sidebar">
+    <h3>Tasks for <span id="username">User 1</span></h3>
+    <ul id="todoList"></ul>
+  </div>
+
+  <div class="main">
+    <h2>To-Do Manager</h2>
+
+    <select id="userSelect" onchange="handleUserChange()">
+      <option value="User 1">User 1</option>
+      <option value="User 2">User 2</option>
+      <option value="User 3">User 3</option>
+      <option value="new">Create a new user</option>
+    </select>
+
+    <input type="text" id="todoInput" placeholder="Enter a task..." />
+    <textarea id="descriptionInput" placeholder="Enter a description..." rows="3"></textarea>
+
+    <div class="task-options">
+      <input type="date" id="deadlineInput" />
+      <label class="checkbox-label">
+        <input type="checkbox" id="completeCheckbox" />
+        Mark as completed
+      </label>
+    </div>
+
+    <button onclick="addTodo()">Add Task</button>
+
+  </div>
+
+  <script>
+    const currentDate = new Date();
+    const formattedDate = currentDate.getFullYear() + '-' +
+      (currentDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
+      currentDate.getDate().toString().padStart(2, '0');
+    
+    async function loadTasksForUser(username) {
+      try {
+        const response = await fetch(`http://localhost:3000/tasks/${encodeURIComponent(username)}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to load tasks');
+        }
+
+        const tasks = await response.json();
+
+        const todoList = document.getElementById("todoList");
+        todoList.innerHTML = '';
+
+        tasks.forEach(task => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${task.title}</strong><br />
+            <small>Date Created: ${new Date(task.dateCreate).toLocaleDateString()}</small><br />
+            <small>Deadline: ${task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}</small><br />
+            <small>Status: ${task.completed ? '✔️ Completed' : '❌ Not completed'}</small><br/>
+            <small>Description: ${task.description || 'No description'}</small>
+          `;
+          todoList.appendChild(li);
+        });
+
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+      }
+    }
+
+    async function fetchUserNames() {
+      try {
+        const response = await fetch('http://localhost:3000/users');
+        const users = await response.json();
+        const userSelect = document.getElementById("userSelect");
+
+        userSelect.innerHTML = '';
+
+        users.forEach(user => {
+          const option = document.createElement("option");
+          option.value = user.name;
+          option.textContent = user.name;
+          userSelect.appendChild(option);
+        });
+
+        const newOption = document.createElement("option");
+        newOption.value = 'new';
+        newOption.textContent = 'Create a new user';
+        userSelect.appendChild(newOption);
+
+        if (users.length > 0) {
+          const firstUser = users[0].name;
+          userSelect.value = firstUser;
+          document.getElementById("username").textContent = firstUser;
+
+          loadTasksForUser(firstUser);
+        }
+
+      } catch (error) {
+        console.error('Error fetching user names:', error);
+      }
+    }
+
+    async function promptForNewUser() {
+      let newUser = null;
+
+      while (true) {
+        newUser = prompt("Enter new user name:");
+
+        if (!newUser || newUser.trim() === "") {
+          alert("Username cannot be empty");
+          continue;
+        }
+
+        const response = await fetch('http://localhost:3000/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newUser.trim() }),
+        });
+
+        if (response.ok) {
+          const select = document.getElementById('userSelect');
+          const option = document.createElement("option");
+          option.text = newUser;
+          option.value = newUser;
+          select.add(option, select.options.length - 1);
+          select.value = newUser;
+          document.getElementById("username").textContent = newUser;
+          loadTasksForUser(newUser);
+          break;
+        } else {
+          const error = await response.json();
+          if (error.message === "Username already exists") {
+            alert("Username already exists, please choose another.");
+          } else {
+            alert("Error creating user.");
+            break;
+          }
+        }
+      }
+    }
+
+    async function handleUserChange() {
+      const select = document.getElementById("userSelect");
+      const selectedValue = select.value;
+
+      if (selectedValue === "new") {
+        await promptForNewUser();
+      } else {
+        document.getElementById("username").textContent = selectedValue;
+      }
+
+      loadTasksForUser(select.value);
+      document.getElementById("todoList").innerHTML = "";
+    }
+
+    async function addTodo() {
+  const User = document.getElementById("userSelect").value;
+  const taskInput = document.getElementById("todoInput");
+  const deadlineInput = document.getElementById("deadlineInput");
+  const completeCheckbox = document.getElementById("completeCheckbox");
+  const descriptionInput = document.getElementById("descriptionInput");
+  const description = descriptionInput.value.trim();
+  
+  const task = taskInput.value.trim();
+  const deadline = deadlineInput.value;
+  const completed = completeCheckbox.checked;
+
+  if (task === "") {
+    alert('Task cannot be empty');
+    return;
+  }
+
+  const todoList = document.getElementById("todoList");
+  const existingTasks = Array.from(todoList.getElementsByTagName("li"));
+  
+  const duplicateTask = existingTasks.some(li => {
+    return li.querySelector("strong").textContent.trim() === task;
+  });
+
+  if (duplicateTask) {
+    alert("A task with this title already exists!");
+    return;
+  }
+
+  const li = document.createElement("li");
+  li.innerHTML = `
+    <strong>${task}</strong><br />
+    <small>Date Created: ${formattedDate}</small><br />
+    <small>Deadline: ${deadline ? deadline : 'No deadline'}</small><br />
+    <small>Status: ${completed ? '✔️ Completed' : '❌ Not completed'}</small><br/>
+    <small>Description: ${description ? description : 'No description'}</small>
+  `;
+  document.getElementById("todoList").appendChild(li);
+
+  taskInput.value = "";
+  deadlineInput.value = "";
+  completeCheckbox.checked = false;
+
+  const response = await fetch('http://localhost:3000/task', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: User.trim(),
+      title: task,
+      createDate: formattedDate,
+      deadline: deadline ? new Date(deadline).toISOString() : null,
+      complete: completed,
+      description: description ? description : 'No description'
+    })
+  });
+}
+
+
+    window.onload = fetchUserNames;
+  </script>
+
+</body>
+
+</html>
